@@ -30,6 +30,7 @@ public class DebugGui {
         io.addConfigFlags(ImGuiConfigFlags.NavEnableKeyboard);
 //        io.addConfigFlags(ImGuiConfigFlags.NavEnableGamepad);
         io.addConfigFlags(ImGuiConfigFlags.DockingEnable);
+        io.addConfigFlags(ImGuiConfigFlags.NoMouseCursorChange);
 
         imGuiGlfw.init(windowId, true);
         imGuiGl3.init("#version 330 core");

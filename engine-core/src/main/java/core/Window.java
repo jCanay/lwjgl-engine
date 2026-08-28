@@ -125,6 +125,11 @@ public class Window {
         if (index == 1) GLFW.glfwMakeContextCurrent(window.id);
         GLFW.glfwSwapInterval(window.vsyncEnabled ? 1 : 0); // V-Sync
         GL.createCapabilities();
+
+        System.out.println("Vendor:   " + GL30.glGetString(GL30.GL_VENDOR));
+        System.out.println("Renderer: " + GL30.glGetString(GL30.GL_RENDERER));
+        System.out.println("Version:  " + GL30.glGetString(GL30.GL_VERSION));
+
         GL30.glViewport(0, 0, width, height);
 
         GLFW.glfwShowWindow(window.id);
@@ -192,5 +197,12 @@ public class Window {
     public void setCursorMode(int cursorMode) {
         GLFW.glfwSetInputMode(id, GLFW.GLFW_CURSOR, cursorMode);
         this.cursorMode = cursorMode;
+
+        if (cursorMode == GLFW.GLFW_CURSOR_DISABLED && GLFW.glfwRawMouseMotionSupported()) {
+            GLFW.glfwSetInputMode(id, GLFW.GLFW_RAW_MOUSE_MOTION, GLFW.GLFW_TRUE);
+            return;
+        }
+
+        GLFW.glfwSetInputMode(id, GLFW.GLFW_RAW_MOUSE_MOTION, GLFW.GLFW_FALSE);
     }
 }

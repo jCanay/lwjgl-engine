@@ -2,6 +2,7 @@ package input;
 
 import core.Window;
 import lombok.Getter;
+import lombok.Setter;
 import org.lwjgl.glfw.GLFW;
 
 import java.util.Arrays;
@@ -26,7 +27,10 @@ public class Input {
     private static double x, y;
     private static double lastX, lastY;
     public static double xOffset, yOffset;
+    private static boolean cursorCaptured = false;
+    private static double savedMouseX, savedMouseY;
 
+    @Setter
     public static boolean firstMouse = true;
 
     // Scroll
@@ -41,6 +45,17 @@ public class Input {
     }
 
     public static void endFrame() {
+        if (cursorCaptured) {
+            Window window = getFocusedWindow();
+            if (window != null) {
+                // Re-centrar el cursor constantemente en el punto de origen (savedMouseX/Y)
+                GLFW.glfwSetCursorPos(window.getId(), savedMouseX, savedMouseY);
+                // Prevenir que el warp genere un delta erróneo en el siguiente frame
+                lastX = savedMouseX;
+                lastY = savedMouseY;
+            }
+        }
+
         // Reset keys
         Arrays.fill(pressedKeys, false);
         Arrays.fill(releasedKeys, false);
@@ -85,16 +100,47 @@ public class Input {
     }
 
     public static void setCursorPosCallback(long windowId, double xPos, double yPos) {
+        x = xPos;
+        y = yPos;
+
         if (firstMouse) {
             lastX = xPos;
             lastY = yPos;
             firstMouse = false;
+            xOffset = 0;
+            yOffset = 0;
+            return;
         }
 
         xOffset = xPos - lastX;
         yOffset = lastY - yPos;
         lastX = xPos;
         lastY = yPos;
+    }
+
+    public static void setCursorCaptured(boolean captured) {
+        if (cursorCaptured == captured) return;
+
+        Window window = getFocusedWindow();
+        if (window == null) return;
+
+        cursorCaptured = captured;
+
+        if (captured) {
+            // 1. Guardar la posición fija de anclaje
+            savedMouseX = x;
+            savedMouseY = y;
+
+            // 2. Ocultar el cursor sin activar la fijación nativa al centro de GLFW
+            window.setCursorMode(GLFW_CURSOR_HIDDEN);
+        } else {
+            // 1. Volver a mostrar el cursor en su sitio
+            window.setCursorMode(GLFW_CURSOR_NORMAL);
+
+            // 2. Asegurar que está en las coordenadas originales
+            GLFW.glfwSetCursorPos(window.getId(), savedMouseX, savedMouseY);
+            resetFirstMouse();
+        }
     }
 
     public static void setScrollCallback(long windowId, double xOffset, double yOffset) {
@@ -134,5 +180,11 @@ public class Input {
 
     public static Window getFocusedWindow() {
         return Window.findById(focusedWindowId).orElse(null);
+    }
+
+    public static void resetFirstMouse() {
+        firstMouse = true;
+        xOffset = 0;
+        yOffset = 0;
     }
 }

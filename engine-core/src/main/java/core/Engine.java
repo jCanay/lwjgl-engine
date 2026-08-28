@@ -48,6 +48,9 @@ public class Engine {
             Time.time += frameTime;
             Time.update();
 
+            GLFW.glfwPollEvents();
+            Input.update();
+
             // 1. Ejecutar FixedUpdate tantas veces como sea necesario según el tiempo acumulado
             while (accumulator >= Time.fixedDeltaTime) {
                 app.fixedUpdate();
@@ -61,7 +64,6 @@ public class Engine {
                 if (w == window || !w.shouldClose()) continue;
                 w.cleanup();
             }
-            Input.update();
             app.update();
 
             // 3. Renderizar la escena
@@ -70,9 +72,8 @@ public class Engine {
             renderer.endFrame();
 
             // 4. SwapBuffers y PollEvents
-            for (int i = 0; i < Window.windows.size(); i++) Window.windows.get(i).swapBuffers();
             Input.endFrame();
-            GLFW.glfwPollEvents();
+            for (int i = 0; i < Window.windows.size(); i++) Window.windows.get(i).swapBuffers();
         }
     }
 

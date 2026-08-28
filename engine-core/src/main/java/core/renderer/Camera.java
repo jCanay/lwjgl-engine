@@ -34,6 +34,9 @@ public class Camera {
     private float speed, runSpeed, sensitivity, fov;
     private boolean running;
 
+    private double savedMouseX;
+    private double savedMouseY;
+
     public record CameraConfig(float speed, float runSpeed, float sensitivity, float fov) {
         public static CameraConfig defaultConfig() {
             return new CameraConfig(2.5f, 10.0f, 0.1f, 45.0f);
@@ -70,23 +73,23 @@ public class Camera {
     }
 
     public void update() {
-        if (Input.isButton(GLFW.GLFW_MOUSE_BUTTON_2)) {
-            Input.getFocusedWindow().setCursorMode(GLFW.GLFW_CURSOR_DISABLED);
+        Window window = Input.getFocusedWindow();
+        if (window == null) return;
 
-            if (Input.xOffset > 0 || Input.xOffset < 0 || Input.yOffset > 0 || Input.yOffset < 0) {
+        if (Input.isButton(GLFW.GLFW_MOUSE_BUTTON_2)) {
+            Input.setCursorCaptured(true);
+
+            if (Input.xOffset != 0 || Input.yOffset != 0) {
                 yaw += (float) Input.xOffset * sensitivity;
                 pitch += (float) Input.yOffset * sensitivity;
 
-                pitch = Math.min(89.0f, pitch);
-                pitch = Math.max(-89.0f, pitch);
-
-                updateCameraVectors();
+                pitch = Math.clamp(-89.0f, 89.0f, pitch);
             }
         } else {
-            Window window = Input.getFocusedWindow();
-            if (window != null) window.setCursorMode(GLFW.GLFW_CURSOR_NORMAL);
-            updateCameraVectors();
+            // 2. Liberar el ratón al soltar
+            Input.setCursorCaptured(false);
         }
+        updateCameraVectors();
     }
 
     private void updateCameraVectors() {
