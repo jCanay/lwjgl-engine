@@ -16,6 +16,21 @@ in vec3 normals;
 
 out vec4 fragColor;
 
+// Material
+#define MAX_TEX_DIFFUSE 4
+#define MAX_TEX_SPECULAR 2
+struct Material {
+    vec3 diffuse;
+    vec3 specular;
+    vec3 emission;
+
+    float shininess;
+
+    sampler2D texture_diffuse[MAX_TEX_DIFFUSE];
+    sampler2D texture_specular[MAX_TEX_SPECULAR];
+};
+uniform Material material;
+
 // Directional light
 struct DirLight {
     vec3 direction;

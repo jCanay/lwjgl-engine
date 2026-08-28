@@ -3,6 +3,7 @@ package editor;
 import core.Application;
 import core.Engine;
 import core.geometry.PrimitiveFactory;
+import core.model.Material;
 import core.model.Mesh;
 import core.model.Model;
 import core.renderer.Camera;
@@ -109,6 +110,7 @@ public class Editor implements Application {
         lightShader = new Shader("default", "light");
         model3d = new Model("model/backpack/backpack.obj");
         cube = PrimitiveFactory.createCube();
+        new Material();
     }
 
     @Override
