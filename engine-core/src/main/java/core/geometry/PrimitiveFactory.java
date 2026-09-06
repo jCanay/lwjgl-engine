@@ -1,14 +1,16 @@
 package core.geometry;
 
+import core.model.Material;
 import core.model.Mesh;
 import core.model.Texture;
 import core.model.Vertex;
 import org.joml.Vector2f;
 import org.joml.Vector3f;
-import util.ResourceLoader;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 
 public class PrimitiveFactory {
     private static List<Vertex> processVertices(float[] verticesArray) {
@@ -32,7 +34,25 @@ public class PrimitiveFactory {
         return vertices;
     }
 
-    public static Mesh createCube() {
+    private static Mesh createMesh(float[] verticesArray, Material material) {
+        Mesh mesh = new Mesh();
+        Texture[] diffuse = material.getTexture_diffuse();
+        Texture[] specular = material.getTexture_specular();
+
+        // Process vertices
+        List<Vertex> vertices = processVertices(verticesArray);
+        mesh.getVertices().addAll(vertices);
+
+        // Process textures
+        mesh.getTextures().addAll(Arrays.stream(diffuse).filter(Objects::nonNull).toList());
+        mesh.getTextures().addAll(Arrays.stream(specular).filter(Objects::nonNull).toList());
+
+        mesh.setup();
+
+        return mesh;
+    }
+
+    public static Mesh createCube(Material material) {
         float[] cubeVertices = {
                 -0.5f, -0.5f, -0.5f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f,
                 0.5f, -0.5f, -0.5f, 0.0f, 0.0f, -1.0f, 1.0f, 0.0f,
@@ -77,26 +97,19 @@ public class PrimitiveFactory {
                 -0.5f, 0.5f, -0.5f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f
         };
 
-        Mesh mesh = new Mesh();
-        Texture diffuse = new Texture();
-        Texture specular = new Texture();
+        return createMesh(cubeVertices, material);
+    }
 
-        // Process vertices
-        List<Vertex> vertices = processVertices(cubeVertices);
-        mesh.getVertices().addAll(vertices);
+    public static Mesh createSquare(Material material) {
+        float[] squareVertices = {
+                -0.5f, -0.5f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f,
+                0.5f, -0.5f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f,
+                -0.5f, 0.5f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f,
+                0.5f, -0.5f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f,
+                0.5f, 0.5f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f,
+                -0.5f, 0.5f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f
+        };
 
-        // Process textures
-        diffuse.setId(ResourceLoader.loadTexture("texture/default_diffuse.png"));
-        diffuse.setType("texture_diffuse");
-
-        specular.setId(ResourceLoader.loadTexture("texture/default_specular.jpg"));
-        specular.setType("texture_specular");
-
-        mesh.getTextures().add(diffuse);
-        mesh.getTextures().add(specular);
-
-        mesh.setupNoIndex();
-
-        return mesh;
+        return createMesh(squareVertices, material);
     }
 }

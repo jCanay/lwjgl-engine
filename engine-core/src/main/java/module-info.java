@@ -16,4 +16,5 @@ module engine.core {
     exports core.renderer;
     exports core.model;
     exports core.geometry;
+    exports core.lighting;
 }

@@ -6,29 +6,33 @@ import imgui.ImGuiIO;
 import imgui.flag.ImGuiColorEditFlags;
 import imgui.flag.ImGuiConfigFlags;
 import imgui.flag.ImGuiDockNodeFlags;
+import imgui.flag.ImGuiWindowFlags;
 import imgui.gl3.ImGuiImplGl3;
 import imgui.glfw.ImGuiImplGlfw;
-import lombok.Getter;
 import org.lwjgl.glfw.GLFW;
+import org.lwjgl.opengl.GL30;
 
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 
 import static imgui.ImGui.*;
 
-@Getter
 public class DebugGui {
     private final ImGuiImplGlfw imGuiGlfw = new ImGuiImplGlfw();
     private final ImGuiImplGl3 imGuiGl3 = new ImGuiImplGl3();
 
-    private float[] bgColor = new float[]{0.05f, 0.05f, 0.05f, 1.0f};
+    public static float[] viewportColor = new float[]{0.0f, 0.0f, 0.0f, 1.0f};
+    public static float[] dirLightIntensity = new float[]{0.5f};
+    public static float[] dirLightColor = new float[]{0.25f, 0.25f, 0.25f, 1.0f};
+    public static float[] pointLightColor = new float[]{1.0f, 0.75f, 0.0f};
+    public static float[] pointLightIntensity = new float[]{2.5f};
+    public static float[] pointLightRadius = new float[]{20.0f};
 
     public void init(long windowId) {
         ImGui.createContext();
         ImGuiIO io = ImGui.getIO();
 
         io.addConfigFlags(ImGuiConfigFlags.NavEnableKeyboard);
-//        io.addConfigFlags(ImGuiConfigFlags.NavEnableGamepad);
         io.addConfigFlags(ImGuiConfigFlags.DockingEnable);
         io.addConfigFlags(ImGuiConfigFlags.NoMouseCursorChange);
 
@@ -55,35 +59,30 @@ public class DebugGui {
         imGuiGl3.newFrame();
         updateGamepadSupport();
         ImGui.newFrame();
+
         dockSpaceOverViewport(0, ImGui.getMainViewport(), ImGuiDockNodeFlags.PassthruCentralNode);
 
-        begin("Stats");
+        renderStats();
+    }
+
+    private void renderStats() {
+        setNextWindowBgAlpha(0.66f);
+        begin("Stats", ImGuiWindowFlags.NoSavedSettings | ImGuiWindowFlags.AlwaysAutoResize);
+        text("GPU: " + GL30.glGetString(GL30.GL_RENDERER));
         text("FPS: " + Time.fps);
         text("Frametime: " + DateTimeFormatter.ofPattern("ss.SS").format(LocalTime.ofNanoOfDay((long) (Time.frameTime * 1000000000d))) + "ms");
         text("Time: " + DateTimeFormatter.ofPattern("HH:mm:ss.SS").format(LocalTime.ofNanoOfDay((long) (Time.time * 1000000000d))));
-//        beginGroup();
-//        if (button("800x600")) {
-//            Input.getFocusedWindow().setWidth(800);
-//            Input.getFocusedWindow().setHeight(600);
-//        }
-//        if (button("1200x900")) {
-//            Input.getFocusedWindow().setWidth(1200);
-//            Input.getFocusedWindow().setHeight(900);
-//        }
-//        endGroup();
-//        beginGroup();
-//        if (button("854x480")) {
-//            Input.getFocusedWindow().setWidth(854);
-//            Input.getFocusedWindow().setHeight(480);
-//        }
-//        if (button("1280x720")) {
-//            Input.getFocusedWindow().setWidth(1280);
-//            Input.getFocusedWindow().setHeight(720);
-//        }
-//        endGroup();
+
+        newLine();
+        separatorText("Light settings");
+        colorEdit4("viewport color", viewportColor, ImGuiColorEditFlags.AlphaPreview | ImGuiColorEditFlags.NoInputs);
+        colorEdit3("dirLight color", dirLightColor, ImGuiColorEditFlags.NoInputs);
+        sliderFloat("dirLight intensity", dirLightIntensity, 0, 2.0f);
+        colorEdit3("pointLight color", pointLightColor, ImGuiColorEditFlags.NoInputs);
+        sliderFloat("pointLight intensity", pointLightIntensity, 0, 10.0f);
+        sliderFloat("pointLight radius", pointLightRadius, 0, 100.0f);
 
         //        float[] color = new float[26000];
-        colorEdit4("Background color", bgColor, ImGuiColorEditFlags.AlphaPreview | ImGuiColorEditFlags.NoInputs);
         end();
     }
 

@@ -20,12 +20,15 @@ import static org.lwjgl.assimp.Assimp.*;
 @Getter
 public class Model {
     private final List<Mesh> meshes;
-    private final List<Texture> texturesLoaded;
+    private static final List<Texture> texturesLoaded;
     private String directory;
+
+    static {
+        texturesLoaded = new ArrayList<>();
+    }
 
     public Model(String path) {
         meshes = new ArrayList<>();
-        texturesLoaded = new ArrayList<>();
         loadModel(path);
     }
 
@@ -51,7 +54,7 @@ public class Model {
         java.net.URL resourceUrl = Model.class.getResource(safePath);
 
         if (resourceUrl == null) {
-            throw new IllegalArgumentException("No se pudo encontrar el recurso en la ruta modular: " + safePath);
+            throw new IllegalArgumentException("No se pudo encontrar el recurso en la ruta: " + safePath);
         }
 
         // 2. Extraer la ruta absoluta del sistema de archivos
@@ -158,10 +161,10 @@ public class Model {
                 long materialPointer = materialBuffer.get(aiMesh.mMaterialIndex());
 
                 AIMaterial material = AIMaterial.create(materialPointer);
-                List<Texture> diffuseMaps = loadMaterialTextures(material, aiTextureType_DIFFUSE, "texture_diffuse");
+                List<Texture> diffuseMaps = loadMaterialTextures(material, aiTextureType_DIFFUSE, TextureType.DIFFUSE);
                 if (!diffuseMaps.isEmpty()) mesh.getTextures().addAll(diffuseMaps);
 
-                List<Texture> specularMaps = loadMaterialTextures(material, aiTextureType_SPECULAR, "texture_specular");
+                List<Texture> specularMaps = loadMaterialTextures(material, aiTextureType_SPECULAR, TextureType.SPECULAR);
                 if (!specularMaps.isEmpty()) mesh.getTextures().addAll(specularMaps);
             }
         }
@@ -171,15 +174,16 @@ public class Model {
         return mesh;
     }
 
-    private List<Texture> loadMaterialTextures(AIMaterial material, int aiTextureType, String typeName) {
+    private List<Texture> loadMaterialTextures(AIMaterial aiMaterial, int aiTextureType, TextureType type) {
         List<Texture> textures = new ArrayList<>();
+//        Material material = new Material();
 
         try (MemoryStack stack = MemoryStack.stackPush()) {
             AIString path = AIString.calloc(stack);
-            int materialCount = aiGetMaterialTextureCount(material, aiTextureType);
+            int materialCount = aiGetMaterialTextureCount(aiMaterial, aiTextureType);
 
             for (int i = 0; i < materialCount; i++) {
-                int result = Assimp.aiGetMaterialTexture(material, aiTextureType, i, path, (IntBuffer) null, null, null, null, null, null);
+                int result = Assimp.aiGetMaterialTexture(aiMaterial, aiTextureType, i, path, (IntBuffer) null, null, null, null, null, null);
                 if (result != Assimp.aiReturn_SUCCESS) continue;
 
                 String texturePath = path.dataString().replace("\\", "/");
@@ -192,7 +196,7 @@ public class Model {
 
                 Texture texture = new Texture();
                 texture.setId(ResourceLoader.loadTexture(texturePath, directory));
-                texture.setType(typeName);
+                texture.setType(type);
                 texture.setPath(texturePath);
 
                 textures.addLast(texture);
@@ -202,7 +206,7 @@ public class Model {
         return textures;
     }
 
-    public void draw(Shader shader) {
-        meshes.forEach(m -> m.draw(shader));
+    public void render(Shader shader) {
+        meshes.forEach(m -> m.render(shader));
     }
 }

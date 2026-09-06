@@ -5,7 +5,6 @@ import lombok.Getter;
 import lombok.Setter;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.glfw.Callbacks;
-import org.lwjgl.glfw.GLFW;
 import org.lwjgl.glfw.GLFWVidMode;
 import org.lwjgl.opengl.GL;
 import org.lwjgl.opengl.GL30;
@@ -13,6 +12,8 @@ import org.lwjgl.opengl.GL30;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+
+import static org.lwjgl.glfw.GLFW.*;
 
 @Getter
 @Setter
@@ -46,7 +47,7 @@ public class Window {
     private long id;
     private String title;
     private int width, height;
-    private int cursorMode = GLFW.GLFW_CURSOR_NORMAL;
+    private int cursorMode = GLFW_CURSOR_NORMAL;
     private boolean resized, vsyncEnabled, fullscreenEnabled;
 
     private Window(String title, int width, int height, boolean vsyncEnabled) {
@@ -62,28 +63,28 @@ public class Window {
     }
 
     public static Window create(String title, int width, int height, boolean vsyncEnabled, int monitor, boolean fullscreenEnabled) {
-        if (!GLFW.glfwInit()) throw new RuntimeException("Failed to initialize GLFW.");
+        if (!glfwInit()) throw new RuntimeException("Failed to initialize GLFW.");
 
         // Apply hints
-        GLFW.glfwWindowHint(GLFW.GLFW_CONTEXT_VERSION_MAJOR, 3);
-        GLFW.glfwWindowHint(GLFW.GLFW_CONTEXT_VERSION_MINOR, 3);
-        GLFW.glfwWindowHint(GLFW.GLFW_OPENGL_FORWARD_COMPAT, GLFW.GLFW_TRUE);
-        GLFW.glfwWindowHint(GLFW.GLFW_OPENGL_PROFILE, GLFW.GLFW_OPENGL_CORE_PROFILE);
-        GLFW.glfwWindowHint(GLFW.GLFW_VISIBLE, GLFW.GLFW_FALSE);
-        GLFW.glfwWindowHint(GLFW.GLFW_MAXIMIZED, GLFW.GLFW_FALSE);
-//        GLFW.glfwWindowHint(GLFW.GLFW_SAMPLES, 4); // Multisampling antialiasing MSAA
+        glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+        glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+        glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GLFW_TRUE);
+        glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+        glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
+        glfwWindowHint(GLFW_MAXIMIZED, GLFW_FALSE);
+//        glfwWindowHint(GLFW_SAMPLES, 4); // Multisampling antialiasing MSAA
 
         // Check monitor and fullscreen
         long monitorId = 0;
         if (fullscreenEnabled) {
-            PointerBuffer monitors = GLFW.glfwGetMonitors();
+            PointerBuffer monitors = glfwGetMonitors();
             if (monitors == null || !monitors.hasRemaining()) {
-                GLFW.glfwTerminate();
+                glfwTerminate();
                 throw new RuntimeException("Failed to create GLFW Window: No monitors found.");
             }
 
             monitorId = monitors.get(monitor);
-            GLFWVidMode vidMode = GLFW.glfwGetVideoMode(monitorId);
+            GLFWVidMode vidMode = glfwGetVideoMode(monitorId);
             if (vidMode == null) {
                 throw new RuntimeException("Failed to create GLFW Window: Failed to get the monitor's video mode");
             }
@@ -93,7 +94,7 @@ public class Window {
 
         // Create window
         Window window = new Window(title, width, height, vsyncEnabled);
-        window.id = (GLFW.glfwCreateWindow(window.width, window.height, window.title, fullscreenEnabled ? monitorId : 0,
+        window.id = (glfwCreateWindow(window.width, window.height, window.title, fullscreenEnabled ? monitorId : 0,
                 0));
         if (window.id == 0) {
             window.cleanup();
@@ -101,7 +102,7 @@ public class Window {
         }
 
         // Resize callback
-        GLFW.glfwSetFramebufferSizeCallback(window.id, (windowId, w, h) -> {
+        glfwSetFramebufferSizeCallback(window.id, (windowId, w, h) -> {
             window.width = w;
             window.height = h;
 
@@ -109,30 +110,26 @@ public class Window {
         });
 
         // Key callback
-        GLFW.glfwSetKeyCallback(window.id, Input::setKeyCallback);
+        glfwSetKeyCallback(window.id, Input::setKeyCallback);
 
         // Mouse callback
-        GLFW.glfwSetMouseButtonCallback(window.id, Input::setMouseButtonCallback);
+        glfwSetMouseButtonCallback(window.id, Input::setMouseButtonCallback);
 
         // Cursor callback
-        GLFW.glfwSetInputMode(window.id, GLFW.GLFW_CURSOR, window.cursorMode);
-        GLFW.glfwSetCursorPosCallback(window.id, Input::setCursorPosCallback);
+        glfwSetInputMode(window.id, GLFW_CURSOR, window.cursorMode);
+        glfwSetCursorPosCallback(window.id, Input::setCursorPosCallback);
 
         // Scroll callback
-        GLFW.glfwSetScrollCallback(window.id, Input::setScrollCallback);
+        glfwSetScrollCallback(window.id, Input::setScrollCallback);
 
         // Set context and vsync
-        if (index == 1) GLFW.glfwMakeContextCurrent(window.id);
-        GLFW.glfwSwapInterval(window.vsyncEnabled ? 1 : 0); // V-Sync
+        if (index == 1) glfwMakeContextCurrent(window.id);
+        glfwSwapInterval(window.vsyncEnabled ? 1 : 0); // V-Sync
         GL.createCapabilities();
-
-        System.out.println("Vendor:   " + GL30.glGetString(GL30.GL_VENDOR));
-        System.out.println("Renderer: " + GL30.glGetString(GL30.GL_RENDERER));
-        System.out.println("Version:  " + GL30.glGetString(GL30.GL_VERSION));
 
         GL30.glViewport(0, 0, width, height);
 
-        GLFW.glfwShowWindow(window.id);
+        glfwShowWindow(window.id);
 
         windows.add(window);
         return window;
@@ -150,22 +147,22 @@ public class Window {
 
     public void makeContextCurrent() {
         if (id == 0) return;
-        GLFW.glfwMakeContextCurrent(id);
+        glfwMakeContextCurrent(id);
     }
 
     public void swapBuffers() {
-        GLFW.glfwSwapBuffers(id);
+        glfwSwapBuffers(id);
     }
 
     public boolean shouldClose() {
         if (id == 0) return false;
-        return GLFW.glfwWindowShouldClose(id);
+        return glfwWindowShouldClose(id);
     }
 
     public void cleanup() {
         if (id == 0) return;
         Callbacks.glfwFreeCallbacks(id);
-        GLFW.glfwDestroyWindow(id);
+        glfwDestroyWindow(id);
         windows.remove(this);
         id = 0;
     }
@@ -173,36 +170,36 @@ public class Window {
     public void setTitle(String title) {
         if (id == 0) return;
         this.title = title;
-        GLFW.glfwSetWindowTitle(id, title);
+        glfwSetWindowTitle(id, title);
     }
 
     public void setVsyncEnabled(boolean vsyncEnabled) {
         if (id == 0) return;
         this.vsyncEnabled = vsyncEnabled;
-        GLFW.glfwSwapInterval(vsyncEnabled ? 1 : 0);
+        glfwSwapInterval(vsyncEnabled ? 1 : 0);
     }
 
     public void setWidth(int width) {
         if (id == 0) return;
         this.width = width;
-        GLFW.glfwSetWindowSize(id, width, height);
+        glfwSetWindowSize(id, width, height);
     }
 
     public void setHeight(int height) {
         if (id == 0) return;
         this.height = height;
-        GLFW.glfwSetWindowSize(id, width, height);
+        glfwSetWindowSize(id, width, height);
     }
 
     public void setCursorMode(int cursorMode) {
-        GLFW.glfwSetInputMode(id, GLFW.GLFW_CURSOR, cursorMode);
+        glfwSetInputMode(id, GLFW_CURSOR, cursorMode);
         this.cursorMode = cursorMode;
 
-        if (cursorMode == GLFW.GLFW_CURSOR_DISABLED && GLFW.glfwRawMouseMotionSupported()) {
-            GLFW.glfwSetInputMode(id, GLFW.GLFW_RAW_MOUSE_MOTION, GLFW.GLFW_TRUE);
+        if (cursorMode == GLFW_CURSOR_DISABLED && glfwRawMouseMotionSupported()) {
+            glfwSetInputMode(id, GLFW_RAW_MOUSE_MOTION, GLFW_TRUE);
             return;
         }
 
-        GLFW.glfwSetInputMode(id, GLFW.GLFW_RAW_MOUSE_MOTION, GLFW.GLFW_FALSE);
+        glfwSetInputMode(id, GLFW_RAW_MOUSE_MOTION, GLFW_FALSE);
     }
 }

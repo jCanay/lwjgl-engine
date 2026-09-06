@@ -4,13 +4,15 @@ import core.renderer.Shader;
 import lombok.Getter;
 import lombok.Setter;
 import org.joml.Vector3f;
-import util.ResourceLoader;
+
+import java.util.Arrays;
+import java.util.Objects;
 
 @Getter
 @Setter
 public class Material {
     private static final int MAX_TEX_DIFFUSE = 4;
-    private static final int MAX_TEX_SPECULAR = 4;
+    private static final int MAX_TEX_SPECULAR = 2;
 
     private final Vector3f ambient;
     private final Vector3f diffuse;
@@ -18,9 +20,6 @@ public class Material {
 
     private float shininess;
 
-    // Quitar ArrayList
-    private final Texture diffuseTex = new Texture();
-    private final Texture specularTex = new Texture();
     private final Texture[] texture_diffuse = new Texture[MAX_TEX_DIFFUSE];
     private final Texture[] texture_specular = new Texture[MAX_TEX_SPECULAR];
 
@@ -29,15 +28,13 @@ public class Material {
         diffuse = new Vector3f(1.0f);
         specular = new Vector3f(0.5f);
         shininess = 32;
-
-        // Process textures
-        diffuseTex.setId(ResourceLoader.loadTexture("texture/default_diffuse.png"));
-        diffuseTex.setType("texture_diffuse");
-
-        specularTex.setId(ResourceLoader.loadTexture("texture/default_specular.jpg"));
-        specularTex.setType("texture_specular");
     }
 
+    private boolean containsTexture(Texture[] textures) {
+        return Arrays.stream(textures).anyMatch(Objects::nonNull);
+    }
+
+    // Implementar esta función en Mesh.render()
     public void render(Shader shader) {
         shader.bind();
 
@@ -51,7 +48,7 @@ public class Material {
             shader.setInt(String.format("material.texture_diffuse[%d]", i), i);
         }
         for (int i = texture_diffuse.length; i < textureCount; i++) {
-            shader.setInt(String.format("material.texture_specular[%d]", i), i);
+            shader.setInt(String.format("material.texture_specular[%d]", i - texture_diffuse.length), i);
         }
     }
 }

@@ -15,8 +15,9 @@ public class Renderer {
     }
 
     private void init() {
-        // Habilitar test de profundidad para renderizado 3D
         glEnable(GL_DEPTH_TEST);
+        glEnable(GL_STENCIL_TEST);
+        glEnable(GL_CULL_FACE);
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 //        glEnable(GL_MULTISAMPLE);
@@ -26,9 +27,9 @@ public class Renderer {
 
     public void beginFrame() {
         // Limpiar el buffer de color y el de profundidad en cada frame
-        float[] bgColor = debugGui.getBgColor();
-        glClearColor(bgColor[0], bgColor[1], bgColor[2], bgColor[3]);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        float[] viewportColor = DebugGui.viewportColor;
+        glClearColor(viewportColor[0], viewportColor[1], viewportColor[2], viewportColor[3]);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
         // Enable wireframe mode
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL); // Set GL_LINE to GL_FILL to disable it
@@ -37,7 +38,7 @@ public class Renderer {
     }
 
     public void render() {
-        
+
     }
 
     public void endFrame() {

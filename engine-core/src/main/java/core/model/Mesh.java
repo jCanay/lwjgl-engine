@@ -16,6 +16,7 @@ public class Mesh {
     private final List<Vertex> vertices;
     private final List<Integer> indices;
     private final List<Texture> textures;
+    //    private Material material;
     private int vaoId;
     private int vboId;
     private int eboId;
@@ -49,17 +50,19 @@ public class Mesh {
         glBindBuffer(GL_ARRAY_BUFFER, vboId);
         glBufferData(GL_ARRAY_BUFFER, vertexBuffer, GL_STATIC_DRAW);
 
-        // Aplanar la lista de índices a un IntBuffer
-        IntBuffer indexBuffer = BufferUtils.createIntBuffer(indices.size());
-        for (Integer index : indices) {
-            indexBuffer.put(index);
-        }
-        indexBuffer.flip();
+        if (!indices.isEmpty()) {
+            // Aplanar la lista de índices a un IntBuffer
+            IntBuffer indexBuffer = BufferUtils.createIntBuffer(indices.size());
+            for (Integer index : indices) {
+                indexBuffer.put(index);
+            }
+            indexBuffer.flip();
 
-        // Subir datos al EBO
-        eboId = glGenBuffers();
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, eboId);
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, indexBuffer, GL_STATIC_DRAW);
+            // Subir datos al EBO
+            eboId = glGenBuffers();
+            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, eboId);
+            glBufferData(GL_ELEMENT_ARRAY_BUFFER, indexBuffer, GL_STATIC_DRAW);
+        }
 
         // Configurar atributos de vértices (Punteros)
         int stride = 8 * Float.BYTES; // 3 pos + 3 norm + 2 uv = 8 floats (32 bytes)
@@ -80,55 +83,30 @@ public class Mesh {
         glBindVertexArray(0);
     }
 
-    public void setupNoIndex() {
-        // Crear y enlazar VAO
-        vaoId = glGenVertexArrays();
-        glBindVertexArray(vaoId);
-
-        // Transformar datos a buffer
-        FloatBuffer vertexBuffer = BufferUtils.createFloatBuffer(vertices.size() * 8); // No usar BufferUtils, usar MemoryUtil (heap) o MemoryStack
-        for (Vertex vertex : vertices) {
-            vertexBuffer.put(vertex.getPosition().x).put(vertex.getPosition().y).put(vertex.getPosition().z);
-            vertexBuffer.put(vertex.getNormal().x).put(vertex.getNormal().y).put(vertex.getNormal().z);
-            vertexBuffer.put(vertex.getTexCoords().x).put(vertex.getTexCoords().y);
+    public void preRender(Shader shader) {
+        if (textures.isEmpty()) {
+            textures.add(Texture.defaultDiffuse);
+            textures.add(Texture.defaultSpecular);
         }
-        vertexBuffer.flip();
-
-        // Subir datos al VBO
-        vboId = glGenBuffers();
-        glBindBuffer(GL_ARRAY_BUFFER, vboId);
-        glBufferData(GL_ARRAY_BUFFER, vertexBuffer, GL_STATIC_DRAW);
-
-        // Posiciones (Offset: 0)
-        glEnableVertexAttribArray(0);
-        glVertexAttribPointer(0, 3, GL_FLOAT, false, 8 * Float.BYTES, 0);
-
-        // Normales (Offset: 3 floats = 12 bytes)
-        glEnableVertexAttribArray(1);
-        glVertexAttribPointer(1, 3, GL_FLOAT, false, 8 * Float.BYTES, 3 * Float.BYTES);
-
-        // Coordenadas UV (Offset: 6 floats = 24 bytes)
-        glEnableVertexAttribArray(2);
-        glVertexAttribPointer(2, 2, GL_FLOAT, false, 8 * Float.BYTES, 6 * Float.BYTES);
-
-        // Desenlazar VAO
-        glBindVertexArray(0);
     }
 
-    public void draw(Shader shader) {
+    public void render(Shader shader) {
+        preRender(shader);
+
         int diffuseNumber = 1;
         int specularNumber = 1;
 
         for (int i = 0; i < textures.size(); i++) {
             glActiveTexture(GL_TEXTURE0 + i);
 
-            String name = textures.get(i).getType();
-            switch (name) {
-                case "texture_diffuse" -> name += diffuseNumber++;
-                case "texture_specular" -> name += specularNumber++;
+            String type = textures.get(i).getType().getShaderName();
+
+            switch (type) {
+                case "texture_diffuse" -> type += diffuseNumber++;
+                case "texture_specular" -> type += specularNumber++;
             }
 
-            shader.setInt(name, i);
+            shader.setInt(type, i);
 
             glBindTexture(GL_TEXTURE_2D, textures.get(i).getId());
         }
